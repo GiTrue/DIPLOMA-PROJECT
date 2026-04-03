@@ -1,0 +1,12 @@
+django>=4.0
+djangorestframework
+django-rest-passwordreset
+django-environ
+psycopg2-binary
+celery
+redis
+django-filter
+pyyaml
+ujson
+requests
+gunicorn
