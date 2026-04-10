@@ -54,6 +54,6 @@ Backend-приложение для автоматизации процесса 
      -d '{"url": "[https://raw.githubusercontent.com/netology-code/python-final-diplom/refs/heads/master/data/shop1.yaml](https://raw.githubusercontent.com/netology-code/python-final-diplom/refs/heads/master/data/shop1.yaml)"}'
 	 
 ## Тесты
-Запуск автоматических тестов:
+# Запуск автоматических тестов:
     ```bash
 	python manage.py test
