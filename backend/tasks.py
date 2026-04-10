@@ -12,16 +12,21 @@ def send_email_task(subject, message, to_email):
 
 @shared_task
 def do_import_task(user_id, url):
-    # Загружаем данные
     response = requests.get(url)
+    if response.status_code != 200:
+        return f"Error loading URL: {response.status_code}"
+    
     data = yaml.safe_load(response.content)
 
-    # Логика именования из ваших заметок
-    # clean_root = f_name.split('.')[0].split('_')[0] 
+    # ИСПРАВЛЕНИЕ ТУТ: Ищем ТОЛЬКО по user_id
+    shop, created = Shop.objects.get_or_create(user_id=user_id, defaults={'name': data['shop']})
     
-    shop, _ = Shop.objects.get_or_create(name=data['shop'], user_id=user_id)
+    # Если магазин уже был, но в файле другое имя — обновляем имя
+    if not created and shop.name != data['shop']:
+        shop.name = data['shop']
+        shop.save()
     
-    # Оптимизируем: сначала удаляем старые данные магазина
+    # Дальше код остается без изменений
     ProductInfo.objects.filter(shop_id=shop.id).delete()
 
     for category in data['categories']:
@@ -46,4 +51,4 @@ def do_import_task(user_id, url):
                 parameter_id=param_obj.id,
                 value=value
             )
-    return f"Import for shop {data['shop']} completed"
+    return f"Import for shop '{data['shop']}' completed"

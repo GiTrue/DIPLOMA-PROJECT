@@ -5,37 +5,39 @@ class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
+        read_only_fields = ('id',)
         extra_kwargs = {'user': {'write_only': True}}
 
-class UserSerializer(serializers.ModelSerializer):
-    contacts = ContactSerializer(read_only=True, many=True)
+class ProductParameterSerializer(serializers.ModelSerializer):
+    parameter = serializers.StringRelatedField()
     class Meta:
-        model = User
-        fields = ('id', 'first_name', 'last_name', 'email', 'company', 'position', 'contacts')
+        model = ProductParameter
+        fields = ('parameter', 'value',)
 
 class ProductInfoSerializer(serializers.ModelSerializer):
     product = serializers.StringRelatedField()
-    category = serializers.CharField(source='product.category.name', read_only=True)
-    
+    category = serializers.StringRelatedField(source='product.category')
+    product_parameters = ProductParameterSerializer(read_only=True, many=True)
+    shop = serializers.StringRelatedField()
+
     class Meta:
         model = ProductInfo
-        fields = ('id', 'model', 'product', 'category', 'shop', 'quantity', 'price', 'price_rrc')
+        fields = ('id', 'model', 'product', 'category', 'shop', 'quantity', 'price', 'price_rrc', 'product_parameters',)
+        read_only_fields = ('id',)
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
-        fields = ('id', 'product_info', 'quantity', 'order')
+        fields = ('id', 'product_info', 'quantity', 'order',)
+        read_only_fields = ('id',)
         extra_kwargs = {'order': {'write_only': True}}
 
 class OrderSerializer(serializers.ModelSerializer):
-    ordered_items = OrderItemSerializer(many=True, read_only=True)
-    total_sum = serializers.SerializerMethodField()
+    ordered_items = OrderItemSerializer(read_only=True, many=True)
+    total_sum = serializers.IntegerField(read_only=True)
+    contact = ContactSerializer(read_only=True)
 
     class Meta:
         model = Order
-        fields = ('id', 'ordered_items', 'state', 'dt', 'total_sum', 'contact')
-
-    def get_total_sum(self, obj):
-        return obj.ordered_items.aggregate(
-            total=Sum(F('quantity') * F('product_info__price'))
-        )['total'] or 0
+        fields = ('id', 'ordered_items', 'state', 'dt', 'total_sum', 'contact',)
+        read_only_fields = ('id',)
