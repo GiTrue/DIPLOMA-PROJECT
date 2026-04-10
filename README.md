@@ -1,59 +1,43 @@
 # Дипломный проект: Сервис автоматизации закупок
 
 ## Описание
-Backend-приложение для автоматизации процесса закупок, реализованное на Django REST Framework. Позволяет магазинам загружать прайс-листы, а покупателям — формировать заказы.
-
-## Основные возможности
-- Регистрация и авторизация пользователей (Token Authentication).
-- Подтверждение Email через систему токенов.
-- Импорт товаров из YAML-файлов в фоновом режиме (Celery).
-- Управление корзиной и оформление заказов.
-- Административная панель для управления данными.
+Backend-приложение для автоматизации закупок на DRF. Реализован полный цикл: от регистрации поставщика и импорта товаров до формирования заказа покупателем.
 
 ## Технологии
-- **Python 3.13** / **Django 4.2**
+- **Python 3.13 / Django 4.2**
 - **Django REST Framework**
-- **Celery** (очереди задач)
-- **Redis** (брокер сообщений)
-- **SQLite** (база данных)
+- **PostgreSQL** (в Docker)
+- **Celery & Redis** (асинхронные задачи: импорт и email)
+- **Docker & Docker Compose**
 
-## Установка и запуск (Локально)
+## Схема API (Эндпоинты)
+| Метод | Эндпоинт | Описание | Доступ |
+|-------|----------|----------|--------|
+| POST | `/api/v1/user/register` | Регистрация нового пользователя | Анонимно |
+| GET | `/api/v1/products` | Список товаров с фильтрацией | Анонимно |
+| POST | `/api/v1/partner/update` | Загрузка прайса через Celery | Магазин |
+| GET/POST | `/api/v1/basket` | Управление корзиной | Покупатель |
+| POST | `/api/v1/order` | Оформление заказа из корзины | Покупатель |
+| GET/POST | `/api/v1/contact` | Управление контактами | Покупатель |
 
-1. Клонируйте репозиторий:
+## Запуск проекта через Docker (Рекомендуется)
+1. Создайте файл `.env` в корне и заполните его (настройки БД и почты).
+2. Соберите и запустите контейнеры:
    ```bash
-   git clone <ссылка_на_ваш_репозиторий>
-   cd diploma_project
+   docker-compose up --build
    
-2. Установите зависимости:
-   ```bash
-   pip install -r requirements.txt
-   
-3. Выполните миграции:
-   ```bash
-   python manage.py migrate
-   
-4. Запустите Redis (должен быть установлен в системе):
-    ```bash
-	redis-server
-	
-5. В отдельных терминалах запустите сервер и Celery:
-    ```bash
-    # Терминал 1: Django
-    python manage.py runserver
+3. Приложение будет доступно по адресу http://localhost:8000.
 
-    # Терминал 2: Celery
-    celery -A core worker -l info
-	
-## Тестирование импорта
-Для проверки импорта используйте команду curl (замените TOKEN на ваш):
-    ```bash
+## Асинхронные задачи
 
-	curl -X POST [http://127.0.0.1:8000/api/v1/partner/update](http://127.0.0.1:8000/api/v1/partner/update) \
-     -H "Authorization: Token <ВАШ_ТОКЕН>" \
-     -H "Content-Type: application/json" \
-     -d '{"url": "[https://raw.githubusercontent.com/netology-code/python-final-diplom/refs/heads/master/data/shop1.yaml](https://raw.githubusercontent.com/netology-code/python-final-diplom/refs/heads/master/data/shop1.yaml)"}'
-	 
-## Тесты
-# Запуск автоматических тестов:
-    ```bash
-	python manage.py test
+В проекте реализованы следующие фоновые задачи (Celery):
+
+do_import_task: загрузка и обработка YAML-прайсов.
+
+send_email_task: отправка писем для подтверждения регистрации.
+
+
+## Тестирование
+Все ключевые функции покрыты тестами. Запуск:
+   ```bash
+   python manage.py test
